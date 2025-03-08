@@ -67,14 +67,15 @@ async def main():
     
     await app.run_polling()
 
-if __name__ == "__main__":
-    import asyncio
-    try:
-        loop = asyncio.get_running_loop()  # Get the current event loop if it's running
-    except RuntimeError:
-        loop = asyncio.new_event_loop()  # If no loop exists, create a new one
-        asyncio.set_event_loop(loop)
-    
-    loop.create_task(main())  # Schedule the main function to run in the event loop
-    loop.run_forever()  # Keep the loop running to handle Telegram updates
+import asyncio
 
+if __name__ == "__main__":
+    async def main_wrapper():
+        """Runs the bot safely in the event loop."""
+        await main()  # Call your async `main` function
+
+    try:
+        asyncio.run(main_wrapper())  # Runs only if no event loop exists
+    except RuntimeError:
+        loop = asyncio.get_running_loop()
+        loop.create_task(main_wrapper())  # Runs inside the existing event loop
