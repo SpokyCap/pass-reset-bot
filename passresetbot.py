@@ -3,83 +3,132 @@ import uuid
 import string
 import random
 import requests
-import asyncio
 from cfonts import render
-from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackContext
+import pyfiglet
+import py_compile
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-# ⚠️ IMPORTANT: Replace with your actual Telegram Bot Token from BotFather! ⚠️
-TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+# Telegram Bot Token
+TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574"
 
-# Render a stylish banner (purely visual, can be removed if not needed)
-banner = render('SpokyCap Tools', colors=['red', 'cyan'], align='center')
-print(banner)
-print("\U0001F511 Pass Reset Tool By: SpokyCap 🎯\n⚡ Sends Instagram Password Reset Links ⚡\n")
+R = "\033[1;31m"
+G = "\033[1;32m"
+B = "\033[0;94m"
+Y = "\033[1;33m"
 
-def generate_reset_data(target):
-    """Generate reset request payload for Instagram."""
-    data = {
-        "_csrftoken": "".join(random.choices(string.ascii_letters + string.digits, k=32)),
-        "guid": str(uuid.uuid4()),
-        "device_id": str(uuid.uuid4())
-    }
-    if "@" in target:
-        data["user_email"] = target
-    else:
-        data["username"] = target
-    return data
+# --- Flick Tools Class adapted for Telegram Bot ---
+class FlickToolsBot:
+    def __init__(self, update, context, target, input_type=None):
+        self.update = update
+        self.context = context
+        self.target = target
+        self.input_type = input_type # 'email' or 'username' or None (auto-detect)
+        self.data = {}
 
-async def send_password_reset(target):
-    """Send password reset request to Instagram."""
-    headers = {
-        "User-Agent": f"Instagram 150.0.0.0.000 Android (29/10; 300dpi; 720x1440; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; en_GB;)"
-    }
-    data = generate_reset_data(target)
-    try:
-        response = requests.post("https://i.instagram.com/api/v1/accounts/send_password_reset/", headers=headers, data=data, timeout=10) # Added timeout
-        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-
-        if "obfuscated_email" in response.text:
-            return f"✅ [+] Success: {response.text}"
+    def process_target(self):
+        if self.target[0] == "@":
+            self.send_message("[♥︎] 𝗘𝗡𝗧𝗘𝗥 𝗧𝗛𝗘 𝗨𝗦𝗘𝗥𝗡𝗔𝗠𝗘 𝗪𝗜𝗧HOUT '@'")
+            return False
+        if self.input_type == 'email' or (self.input_type is None and "@" in self.target): # Check input_type or auto-detect if None
+            self.data = {
+                "_csrftoken": "".join(
+                    random.choices(
+                        string.ascii_lowercase + string.ascii_uppercase + string.digits, k=32
+                    )
+                ),
+                "user_email": self.target,
+                "guid": uuid.uuid4(),
+                "device_id": uuid.uuid4(),
+            }
+        elif self.input_type == 'username' or (self.input_type is None and "@" not in self.target): # Check input_type or auto-detect if None
+            self.data = {
+                "_csrftoken": "".join(
+                    random.choices(
+                        string.ascii_lowercase + string.ascii_uppercase + string.digits, k=32
+                    )
+                ),
+                "username": self.target,
+                "guid": uuid.uuid4(),
+                "device_id": uuid.uuid4(),
+            }
         else:
-            return f"❌ [-] Failed: {response.text}"
+            self.send_message("Invalid input type. Please use /email or /username command before entering the ID.")
+            return False
+        return True
 
-    except requests.exceptions.RequestException as e: # Catch network errors
-        return f"❌ [-] Failed with error: {e}"
+    def send_password_reset(self):
+        if not self.process_target():
+            return
 
-async def reset_command(update: Update, context: CallbackContext) -> None:
-    """Handle the /reset command in Telegram."""
-    if not context.args:
-        await update.message.reply_text("⚠️ Usage: /reset <email/username>")
-        return
-    target = context.args[0]
-    if target.startswith("@"):
-        await update.message.reply_text("🚨 [!] Enter the username without '@' symbol.")
-        return
+        head = {
+            "user-agent": f"Instagram 150.0.0.0.000 Android (29/10; 300dpi; 720x1440; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}/{''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; en_GB;)"
+        }
+        try:
+            req = requests.post(
+                "https://i.instagram.com/api/v1/accounts/send_password_reset/",
+                headers=head,
+                data=self.data,
+                timeout=10
+            )
+            req.raise_for_status()
 
-    await update.message.reply_text(f"⏳ Sending password reset link for: {target}...") # Added processing message
-    result = await send_password_reset(target)
-    await update.message.reply_text(result)
+            if "obfuscated_email" in req.text:
+                self.send_message(f"[+] Reset request sent successfully for: {self.target}\n[+] Response: {req.text}")
+            else:
+                self.send_message(f"[-] Reset request failed for: {self.target}\n[-] Response: {req.text}")
 
-async def main():
-    """Start and run the Telegram bot."""
-    if TELEGRAM_BOT_TOKEN == "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574": # Check if token was replaced
-        print("❌ Error: Bot token is missing! You MUST replace 'YOUR_TELEGRAM_BOT_TOKEN' with your actual bot token.")
-        return
+        except requests.exceptions.RequestException as e:
+            self.send_message(f"[-] An error occurred while sending the reset request for: {self.target}")
+            self.send_message(f"[-] Error details: {e}")
 
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-    app.add_handler(CommandHandler("reset", reset_command))
+    def send_message(self, text):
+        self.update.message.reply_text(text)
 
-    print("🤖 Telegram bot is now running! Send /reset <email/username> in Telegram to use it.")
-    await app.run_polling()
 
-if __name__ == "__main__":
-    import nest_asyncio
-    nest_asyncio.apply()
+# --- Telegram Bot Handlers ---
+def start(update, context):
+    flick_tools_banner = render('Flick Tools', colors=['white', 'cyan'], align='center')
+    update.message.reply_text(f"```\n{flick_tools_banner}\n```", parse_mode=telegram.ParseMode.MARKDOWN)
+    update.message.reply_text("Pass Reset Tool By : SpokyCap\nThis File Can Reset Hotmail Account [ 70% ]\n\nTo send a reset request, use:\n\n* `/email your_email@example.com`  (for email reset)\n* `/username yourusername` (for username reset)\n\nAlternatively, you can just enter your email or username directly after sending /start.")
 
-    try:
-        asyncio.run(main()) # Use asyncio.run to start the async main function
-    except KeyboardInterrupt:
-        print("Bot stopped manually.") # Handle manual bot stopping
-    except Exception as e:
-        print(f"Bot failed to start due to error: {e}") # Catch other startup errors
+
+def handle_email(update, context):
+    if context.args:
+        email_address = context.args[0] # Get email from command arguments
+        bot_instance = FlickToolsBot(update, context, email_address, input_type='email')
+        bot_instance.send_password_reset()
+    else:
+        update.message.reply_text("Please provide an email address after the /email command. For example: `/email test@example.com`")
+
+def handle_username(update, context):
+    if context.args:
+        username = context.args[0] # Get username from command arguments
+        bot_instance = FlickToolsBot(update, context, username, input_type='username')
+        bot_instance.send_password_reset()
+    else:
+        update.message.reply_text("Please provide a username after the /username command. For example: `/username testuser`")
+
+
+def handle_message(update, context):
+    user_input = update.message.text
+    # Assume it's email or username if no command is used, and let the bot auto-detect
+    bot_instance = FlickToolsBot(update, context, user_input) # input_type is None for auto-detect
+    bot_instance.send_password_reset()
+
+
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("email", handle_email, pass_args=True)) # Add handler for /email command
+    dp.add_handler(CommandHandler("username", handle_username, pass_args=True)) # Add handler for /username command
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    print("Telegram Bot started...")
+    main()
