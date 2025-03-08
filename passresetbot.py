@@ -2,6 +2,8 @@ import telebot
 import requests as C
 import re
 from uuid import uuid4
+import socket
+import threading
 
 # Replace with your actual bot token from BotFather
 BOT_TOKEN = '7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA'  # Replace with your actual token
