@@ -30,7 +30,10 @@ def webhook():
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "🌟 Hi! 🌟\n\nSend me an Instagram username or email to attempt a password reset and retrieve the masked email!")
+    try:
+        bot.reply_to(message, "🌟 Hi! 🌟\n\nSend me an Instagram username or email to attempt a password reset and retrieve the masked email!")
+    except Exception as e:
+        print(f"BOT LOG: Error in /start handler: {e}")
 
 
 # Function to send password reset request
@@ -42,7 +45,12 @@ def X(email_or_username):
         'X-CSRFToken': 'missing'  # Replace with the actual CSRF token
     }
     data = {'email_or_username': email_or_username, 'recaptcha_challenge_field': ''}
+    print(f"BOT LOG: Sending request to {url}")
+    print(f"BOT LOG: Headers: {headers}")
+    print(f"BOT LOG: Data: {data}")
     response = C.post(url, headers=headers, data=data)
+    print(f"BOT LOG: Response status code: {response.status_code}")
+    print(f"BOT LOG: Response text: {response.text}")
     return response
 
 
@@ -67,7 +75,10 @@ def Z(username):
     }
 
     try:
+        print(f"BOT LOG: Sending request to {url}")
+        print(f"BOT LOG: Headers: {headers}")
         response = C.get(url, headers=headers).json()
+        print(f"BOT LOG: Response: {response}")
         user_id = response['data']['user']['id']
     except Exception as e:
         print(f"BOT LOG: Failed to retrieve user ID - {e}")
@@ -82,7 +93,11 @@ def Z(username):
     reset_data = {'user_id': user_id, 'device_id': str(uuid4())}
 
     try:
+        print(f"BOT LOG: Sending request to {reset_url}")
+        print(f"BOT LOG: Headers: {reset_headers}")
+        print(f"BOT LOG: Data: {reset_data}")
         reset_response = C.post(reset_url, headers=reset_headers, data=reset_data).json()
+        print(f"BOT LOG: Response: {reset_response}")
         return reset_response.get('obfuscated_email')
     except Exception as e:
         print(f"BOT LOG: Failed to send password reset - {e}")
@@ -91,6 +106,7 @@ def Z(username):
 
 @bot.message_handler(func=lambda message: True)
 def handle_instagram_reset(message):
+    print("General message handler triggered")  # Log message handler trigger
     username_or_email = message.text.strip()
     response = X(username_or_email)
 
@@ -99,18 +115,31 @@ def handle_instagram_reset(message):
         retrieved_email = Z(username_or_email)
 
         if extracted_email:
-            bot.reply_to(message, f"✅ Reset sent to {extracted_email}")
+            try:
+                bot.reply_to(message, f"✅ Reset sent to {extracted_email}")
+            except Exception as e:
+                print(f"BOT LOG: Failed to send Telegram reply: {e}")
             print(f"BOT LOG: Reset sent to {extracted_email}")
         elif retrieved_email:
-            bot.reply_to(message, f"✅ Reset sent to {retrieved_email}")
+            try:
+                bot.reply_to(message, f"✅ Reset sent to {retrieved_email}")
+            except Exception as e:
+                print(f"BOT LOG: Failed to send Telegram reply: {e}")
             print(f"BOT LOG: Reset sent to {retrieved_email}")
         else:
-            bot.reply_to(message, f"✅ Reset sent to {username_or_email}")
+            try:
+                bot.reply_to(message, f"✅ Reset sent to {username_or_email}")
+            except Exception as e:
+                print(f"BOT LOG: Failed to send Telegram reply: {e}")
             print(f"BOT LOG: Reset sent to {username_or_email}")
     else:
-        bot.reply_to(message, f"❌ Failed to send reset to {username_or_email}")
+        try:
+            bot.reply_to(message, f"❌ Failed to send reset to {username_or_email}")
+        except Exception as e:
+            print(f"BOT LOG: Failed to send Telegram reply: {e}")
         print(f"BOT LOG: Failed to send reset to {username_or_email}")
 
 
 if __name__ == "__main__":
-    server.run(host="0.0.0.0", port=10000)
+    from waitress import serve
+    serve(server, host="0.0.0.0", port=10000)
