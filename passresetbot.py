@@ -70,12 +70,12 @@ async def main():
 import asyncio
 
 if __name__ == "__main__":
-    async def main_wrapper():
-        """Runs the bot safely in the event loop."""
-        await main()  # Call your async `main` function
-
+    import asyncio
     try:
-        asyncio.run(main_wrapper())  # Runs only if no event loop exists
-    except RuntimeError:
         loop = asyncio.get_running_loop()
-        loop.create_task(main_wrapper())  # Runs inside the existing event loop
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(main_wrapper())
+
