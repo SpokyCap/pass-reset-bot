@@ -68,6 +68,8 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
+    import nest_asyncio  # 🔥 Fix for nested event loops in Render
+    nest_asyncio.apply()  # ✅ Allows reusing the existing event loop
+
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())  # Proper method for running async in Render
+    loop.run_until_complete(main())  # ✅ Correct way to run async in Render
