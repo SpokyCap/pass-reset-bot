@@ -70,9 +70,11 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     try:
-        loop = asyncio.get_running_loop()  # Check if there's an existing event loop
+        loop = asyncio.get_running_loop()  # Get the current event loop if it's running
     except RuntimeError:
-        loop = asyncio.new_event_loop()  # If none, create a new one
+        loop = asyncio.new_event_loop()  # If no loop exists, create a new one
         asyncio.set_event_loop(loop)
     
-    loop.run_until_complete(main())  # Run the bot within the active event loop
+    loop.create_task(main())  # Schedule the main function to run in the event loop
+    loop.run_forever()  # Keep the loop running to handle Telegram updates
+
