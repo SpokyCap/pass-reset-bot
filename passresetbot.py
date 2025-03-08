@@ -86,6 +86,23 @@ def handle_instagram_reset(message):
         bot.reply_to(message, f"❌ Failed to send reset to {username_or_email}")
         print(f"BOT LOG: Failed to send reset to {username_or_email}")
 
+# Function to open a TCP port and listen for incoming connections
+def open_port(port):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', port))  # Listen on all interfaces
+    server_socket.listen(5)  # Allow up to 5 connections
+    print(f"Listening on port {port}...")
+
+    while True:
+        client_socket, addr = server_socket.accept()
+        print(f"Connection from {addr}")
+        client_socket.send(b"Hello from the server!\n")
+        client_socket.close()
+
+# Start the TCP server in a separate thread
+port = 12345  # Change this to your desired port
+threading.Thread(target=open_port, args=(port,), daemon=True).start()
+
 # Start the bot
 print("BOT LOG: Bot started...")
 bot.polling()
