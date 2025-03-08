@@ -3,12 +3,13 @@ import uuid
 import string
 import random
 import requests
+import asyncio  # ADDED: Import asyncio library
 from cfonts import render
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 
 # Telegram Bot Token (Add your bot token here)
-TELEGRAM_BOT_TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574"
+TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN" # Replace with your actual bot token
 
 # Render a stylish banner
 banner = render('SpokyCap Tools', colors=['red', 'cyan'], align='center')
@@ -35,7 +36,7 @@ async def send_password_reset(target):
     }
     data = generate_reset_data(target)
     response = requests.post("https://i.instagram.com/api/v1/accounts/send_password_reset/", headers=headers, data=data)
-    
+
     if "obfuscated_email" in response.text:
         return f"✅ [+] Success: {response.text}"
     else:
@@ -55,16 +56,16 @@ async def reset_command(update: Update, context: CallbackContext) -> None:
 
 async def main():
     """Start the Telegram bot."""
-    if not TELEGRAM_BOT_TOKEN:
-        print("❌ Error: Bot token is missing.")
+    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_TELEGRAM_BOT_TOKEN": # Check if token is actually set
+        print("❌ Error: Bot token is missing. Please replace 'YOUR_TELEGRAM_BOT_TOKEN' with your actual bot token.")
         return
-    
+
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-    
+
     app.add_handler(CommandHandler("reset", reset_command))
 
     print("🤖 Bot is now running! Send /reset <email/username> in Telegram to use it.")
-    
+
     await app.run_polling()
 
 if __name__ == "__main__":
