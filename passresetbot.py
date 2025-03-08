@@ -6,7 +6,7 @@ from uuid import uuid4
 from flask import Flask, request
 
 # Replace with your actual bot token from BotFather
-BOT_TOKEN = '7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA'  # Replace with your actual token
+BOT_TOKEN = 'BOT_TOKEN'  # Replace with your actual token
 bot = telebot.TeleBot(BOT_TOKEN)
 
 app = Flask(_name_)
