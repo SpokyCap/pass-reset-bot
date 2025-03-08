@@ -1,4 +1,2 @@
-python-telegram-bot
+telebot
 requests
-cfonts
-pyfiglet
