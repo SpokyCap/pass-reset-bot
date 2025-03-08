@@ -12,7 +12,7 @@ from telegram.ext import filters as Filters # Updated Filters import
 
 
 # Telegram Bot Token
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN" # Replace with your actual token - but better to set as environment variable in Render
+TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574" # Replace with your actual token - but better to set as environment variable in Render
 
 R = "\033[1;31m"
 G = "\033[1;32m"
@@ -120,12 +120,12 @@ def handle_message(update, context):
 
 
 def main():
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater(TOKEN) # Removed use_context=True
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("email", handle_email, pass_args=True)) # Add handler for /email command
-    dp.add_handler(CommandHandler("username", handle_username, pass_args=True)) # Add handler for /username command
+    dp.add_handler(CommandHandler("email", handle_email, pass_args=True))
+    dp.add_handler(CommandHandler("username", handle_username, pass_args=True))
     dp.add_handler(MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)) # Corrected Filters usage
 
     updater.start_polling()
