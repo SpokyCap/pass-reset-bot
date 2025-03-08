@@ -7,8 +7,7 @@ from cfonts import render
 import pyfiglet
 import py_compile
 import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler
-from telegram.ext import filters as Filters # Updated Filters import
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters as Filters
 
 
 # Telegram Bot Token
@@ -89,48 +88,47 @@ class FlickToolsBot:
 
 
 # --- Telegram Bot Handlers ---
-def start(update, context):
+async def start(update, context): # Make handlers async
     flick_tools_banner = render('Flick Tools', colors=['white', 'cyan'], align='center')
-    update.message.reply_text(f"```\n{flick_tools_banner}\n```", parse_mode=telegram.ParseMode.MARKDOWN)
-    update.message.reply_text("Pass Reset Tool By : SpokyCap\nThis File Can Reset Hotmail Account [ 70% ]\n\nTo send a reset request, use:\n\n* `/email your_email@example.com`  (for email reset)\n* `/username yourusername` (for username reset)\n\nAlternatively, you can just enter your email or username directly after sending /start.")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"```\n{flick_tools_banner}\n```", parse_mode=telegram.ParseMode.MARKDOWN)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Pass Reset Tool By : SpokyCap\nThis File Can Reset Hotmail Account [ 70% ]\n\nTo send a reset request, use:\n\n* `/email your_email@example.com`  (for email reset)\n* `/username yourusername` (for username reset)\n\nAlternatively, you can just enter your email or username directly after sending /start.")
 
 
-def handle_email(update, context):
+async def handle_email(update, context): # Make handlers async
     if context.args:
         email_address = context.args[0] # Get email from command arguments
         bot_instance = FlickToolsBot(update, context, email_address, input_type='email')
         bot_instance.send_password_reset()
     else:
-        update.message.reply_text("Please provide an email address after the /email command. For example: `/email test@example.com`")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide an email address after the /email command. For example: `/email test@example.com`")
 
-def handle_username(update, context):
+async def handle_username(update, context): # Make handlers async
     if context.args:
         username = context.args[0] # Get username from command arguments
         bot_instance = FlickToolsBot(update, context, username, input_type='username')
         bot_instance.send_password_reset()
     else:
-        update.message.reply_text("Please provide a username after the /username command. For example: `/username testuser`")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Please provide a username after the /username command. For example: `/username testuser`")
 
 
-def handle_message(update, context):
+async def handle_message(update, context): # Make handlers async
     user_input = update.message.text
     # Assume it's email or username if no command is used, and let the bot auto-detect
     bot_instance = FlickToolsBot(update, context, user_input) # input_type is None for auto-detect
     bot_instance.send_password_reset()
 
 
-def main():
-    updater = Updater(TOKEN) # Removed use_context=True
-    dp = updater.dispatcher
+async def main() -> None: # Make main async
+    application = ApplicationBuilder().token(TOKEN).build() # Use ApplicationBuilder
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("email", handle_email, pass_args=True))
-    dp.add_handler(CommandHandler("username", handle_username, pass_args=True))
-    dp.add_handler(MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)) # Corrected Filters usage
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("email", handle_email))
+    application.add_handler(CommandHandler("username", handle_username))
+    application.add_handler(MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message))
 
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling() # Use async run_polling
 
 if __name__ == '__main__':
     print("Telegram Bot started...")
-    main()
+    import asyncio # Import asyncio
+    asyncio.run(main()) # Run main using asyncio.run
