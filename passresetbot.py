@@ -5,9 +5,9 @@ import random
 import requests
 from cfonts import render
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackContext
 
-# 🔑 Insert your Telegram Bot Token here (Replace with your actual token)
+# Telegram Bot Token (Add your bot token here)
 TELEGRAM_BOT_TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574"
 
 # Render a stylish banner
@@ -28,7 +28,7 @@ def generate_reset_data(target):
         data["username"] = target
     return data
 
-def send_password_reset(target):
+async def send_password_reset(target):
     """Send password reset request."""
     headers = {
         "User-Agent": f"Instagram 150.0.0.0.000 Android (29/10; 300dpi; 720x1440; {''.join(random.choices(string.ascii_lowercase+string.digits, k=16))}; en_GB;)"
@@ -41,32 +41,32 @@ def send_password_reset(target):
     else:
         return f"❌ [-] Failed: {response.text}"
 
-def reset_command(update: Update, context: CallbackContext) -> None:
+async def reset_command(update: Update, context: CallbackContext) -> None:
     """Handle /reset command in Telegram."""
     if not context.args:
-        update.message.reply_text("⚠️ Usage: /reset <email/username>")
+        await update.message.reply_text("⚠️ Usage: /reset <email/username>")
         return
     target = context.args[0]
     if target.startswith("@"):  # Ensure username format is correct
-        update.message.reply_text("🚨 [!] Enter the username without '@'")
+        await update.message.reply_text("🚨 [!] Enter the username without '@'")
         return
-    result = send_password_reset(target)
-    update.message.reply_text(result)
+    result = await send_password_reset(target)
+    await update.message.reply_text(result)
 
-def main():
+async def main():
     """Start the Telegram bot."""
     if not TELEGRAM_BOT_TOKEN:
-        print("❌ Error: Bot token is missing. Make sure it's set in the script.")
+        print("❌ Error: Bot token is missing.")
         return
     
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("reset", reset_command))
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     
+    app.add_handler(CommandHandler("reset", reset_command))
+
     print("🤖 Bot is now running! Send /reset <email/username> in Telegram to use it.")
     
-    updater.start_polling()
-    updater.idle()
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
