@@ -13,7 +13,7 @@ TELEGRAM_BOT_TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574"
 # Render a stylish banner
 banner = render('SpokyCap Tools', colors=['red', 'cyan'], align='center')
 print(banner)
-print("🔑 Pass Reset Tool By: SpokyCap 🎭\n⚡ Sends Instagram Password Reset Links ⚡\n")
+print("\U0001F511 Pass Reset Tool By: SpokyCap 🎯\n⚡ Sends Instagram Password Reset Links ⚡\n")
 
 def generate_reset_data(target):
     """Generate reset request payload."""
@@ -69,4 +69,8 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except RuntimeError:  # Handle already running event loop (common in some environments)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
