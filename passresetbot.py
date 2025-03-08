@@ -76,4 +76,7 @@ if __name__ == "__main__":
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    loop.run_until_complete(main())  # ✅ Fixed: Call 'main()', not 'main_wrapper()'
+   import asyncio
+
+if __name__ == "__main__":
+    asyncio.run(main())  # ✅ Proper way to run async functions
