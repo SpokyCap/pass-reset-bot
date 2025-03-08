@@ -67,16 +67,7 @@ async def main():
     
     await app.run_polling()
 
-import asyncio
-
 if __name__ == "__main__":
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-import asyncio
-
-if __name__ == "__main__":
-    asyncio.run(main())  # ✅ Proper way to run async functions
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())  # Proper method for running async in Render
