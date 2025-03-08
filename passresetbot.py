@@ -56,7 +56,7 @@ async def reset_command(update: Update, context: CallbackContext) -> None:
 
 async def main():
     """Start the Telegram bot."""
-    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "YOUR_TELEGRAM_BOT_TOKEN": # Check if token is actually set
+    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574": # Check if token is actually set
         print("❌ Error: Bot token is missing. Please replace 'YOUR_TELEGRAM_BOT_TOKEN' with your actual bot token.")
         return
 
