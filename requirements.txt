@@ -1,4 +1,4 @@
-cfonts
 python-telegram-bot
 requests
-nest_asyncio
+cfonts
+pyfiglet
