@@ -7,7 +7,7 @@ import os
 from flask import Flask, request
 
 # Get BOT_TOKEN from environment variables
-BOT_TOKEN = os.environ.get("7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN environment variable not set.")
 
