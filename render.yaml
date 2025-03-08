@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: telegram-reset-bot  # Choose a name for your service (you can change this)
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python your_script_name.py  # Replace your_script_name.py with your script's filename
-    envVars:
-      - key: BOT_TOKEN
-        value: YOUR_TELEGRAM_BOT_TOKEN  # Replace YOUR_TELEGRAM_BOT_TOKEN with your actual token
