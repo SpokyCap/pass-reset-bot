@@ -7,10 +7,12 @@ from cfonts import render
 import pyfiglet
 import py_compile
 import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler
+from telegram.ext import filters as Filters # Updated Filters import
+
 
 # Telegram Bot Token
-TOKEN = "7710265909:AAG9zB5VHfSByeTVIqbSPL-EkpFcgpoj574"
+TOKEN = "YOUR_TELEGRAM_BOT_TOKEN" # Replace with your actual token - but better to set as environment variable in Render
 
 R = "\033[1;31m"
 G = "\033[1;32m"
@@ -124,7 +126,7 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("email", handle_email, pass_args=True)) # Add handler for /email command
     dp.add_handler(CommandHandler("username", handle_username, pass_args=True)) # Add handler for /username command
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    dp.add_handler(MessageHandler(Filters.TEXT & ~Filters.COMMAND, handle_message)) # Corrected Filters usage
 
     updater.start_polling()
     updater.idle()
