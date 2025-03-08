@@ -1,44 +1,11 @@
 import telebot
 import requests as C
 import re
-import json
 from uuid import uuid4
-from flask import Flask, request
 
 # Replace with your actual bot token from BotFather
-BOT_TOKEN = 'BOT_TOKEN'  # Replace with your actual token
+BOT_TOKEN = '7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA'  # Replace with your actual token
 bot = telebot.TeleBot(BOT_TOKEN)
-
-app = Flask(_name_)
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    update = request.get_json()
-    if 'message' in update:
-        message = update['message']
-        handle_message(message)
-    return '', 200
-
-def handle_message(message):
-    username_or_email = message['text'].strip()
-    response = X(username_or_email)
-
-    if response.status_code == 200:
-        extracted_email = Y(response.text)
-        retrieved_email = Z(username_or_email)
-
-        if extracted_email:
-            bot.send_message(message['chat']['id'], f"✅ Reset sent to {extracted_email}")
-            print(f"BOT LOG: Reset sent to {extracted_email}")
-        elif retrieved_email:
-            bot.send_message(message['chat']['id'], f"✅ Reset sent to {retrieved_email}")
-            print(f"BOT LOG: Reset sent to {retrieved_email}")
-        else:
-            bot.send_message(message['chat']['id'], f"✅ Reset sent to {username_or_email}")
-            print(f"BOT LOG: Reset sent to {username_or_email}")
-    else:
-        bot.send_message(message['chat']['id'], f"❌ Failed to send reset to {username_or_email}")
-        print(f"BOT LOG: Failed to send reset to {username_or_email}")
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -97,12 +64,28 @@ def Z(username):
         print(f"BOT LOG: Failed to send password reset - {e}")
         return None
 
-# Set the webhook for the bot
-def set_webhook():
-    webhook_url = 'https://your-render-url/webhook'  # Replace with your Render URL
-    bot.remove_webhook()
-    bot.set_webhook(url=webhook_url)
+@bot.message_handler(func=lambda message: True)
+def handle_instagram_reset(message):
+    username_or_email = message.text.strip()
+    response = X(username_or_email)
 
-if _name_ == '_main_':
-    set_webhook()
-    app.run(host='0.0.0.0', port=5000)
+    if response.status_code == 200:
+        extracted_email = Y(response.text)
+        retrieved_email = Z(username_or_email)
+
+        if extracted_email:
+            bot.reply_to(message, f"✅ Reset sent to {extracted_email}")
+            print(f"BOT LOG: Reset sent to {extracted_email}")
+        elif retrieved_email:
+            bot.reply_to(message, f"✅ Reset sent to {retrieved_email}")
+            print(f"BOT LOG: Reset sent to {retrieved_email}")
+        else:
+            bot.reply_to(message, f"✅ Reset sent to {username_or_email}")
+            print(f"BOT LOG: Reset sent to {username_or_email}")
+    else:
+        bot.reply_to(message, f"❌ Failed to send reset to {username_or_email}")
+        print(f"BOT LOG: Failed to send reset to {username_or_email}")
+
+# Start the bot
+print("BOT LOG: Bot started...")
+bot.polling()
