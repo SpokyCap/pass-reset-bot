@@ -40,7 +40,7 @@ async def send_reset_request(update: Update, context: ContextTypes.DEFAULT_TYPE)
         "Content-Type": "application/x-www-form-urlencoded",
     }
 
-    data = {"username_or_email": user_input}  # Fixed parameter name
+    data = {"user_email": user_input}  # Using the email field
 
     try:
         response = requests.post(url, headers=headers, data=data)
@@ -50,8 +50,8 @@ async def send_reset_request(update: Update, context: ContextTypes.DEFAULT_TYPE)
             response_json = response.json()
             formatted_json = json.dumps(response_json, indent=2)
 
-            # Escape special characters for MarkdownV2 (double backslashes)
-            escape_chars = r"\._{}[]()#+-=|!`>"
+            # Escape special characters for MarkdownV2
+            escape_chars = ['.', '-', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '=', '|', '!', '`']
             for char in escape_chars:
                 formatted_json = formatted_json.replace(char, f"\\{char}")
 
@@ -72,10 +72,6 @@ async def send_reset_request(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # 🔹 Start the Telegram bot
 def main():
-    # Prevent multiple bot instances from running
-    import os
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Command handlers
@@ -84,7 +80,7 @@ def main():
 
     # Start the bot
     logger.info("✅ Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)  # Ensure all updates are received
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
