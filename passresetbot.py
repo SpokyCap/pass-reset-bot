@@ -32,7 +32,6 @@ async def send_reset_request(update: Update, context: CallbackContext):
     data = {"user_email": user_input}
 
     try:
-        response = requests.post(url, headers=headers, data=data)
         response_json = response.json()  # Convert response to JSON
 
         if response_json.get("status") == "ok":
