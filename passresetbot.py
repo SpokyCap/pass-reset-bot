@@ -1,7 +1,9 @@
 import os
+import subprocess
+import sys
+import asyncio
 import logging
 import requests
-import json
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
@@ -15,11 +17,11 @@ TELEGRAM_BOT_TOKEN = "7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA"
 # 🔹 Function for /start command
 async def start(update: Update, context: CallbackContext):
     welcome_msg = (
-        "🤖 *Welcome to the Insta Reset Bot!*\n\n"
+        "🤖 Welcome to the Insta Reset Bot!\n\n"
         "🔹 Send me your Instagram username/email, and I'll request a password reset for you.\n"
-        "           ~By @spokycap | @Cyberjurks\n\n"
+        "           ~By @spokycap | @Cyberjurks\n\n "
     )
-    await update.message.reply_text(welcome_msg, parse_mode="MarkdownV2")
+    await update.message.reply_text(welcome_msg)
 
 # 🔹 Function to handle incoming messages
 async def send_reset_request(update: Update, context: CallbackContext):
@@ -36,23 +38,7 @@ async def send_reset_request(update: Update, context: CallbackContext):
 
     try:
         response = requests.post(url, headers=headers, data=data)
-
-        # Format response JSON if possible
-        try:
-            response_json = response.json()
-            formatted_json = json.dumps(response_json, indent=2)
-        except json.JSONDecodeError:
-            formatted_json = response.text  # Use raw response if not JSON
-
-        # Escape special characters for Telegram MarkdownV2
-        escape_chars = ['.', '-', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '=', '|', '!', '`']
-        for char in escape_chars:
-            formatted_json = formatted_json.replace(char, f"\\{char}")
-
-        formatted_response = f"📩 *Instagram Response:*\n```\n{formatted_json}\n```"
-        
-        await update.message.reply_text(formatted_response, parse_mode="MarkdownV2")
-
+        await update.message.reply_text(f"📩 Instagram Response:\n{response.text}")
     except Exception as e:
         logger.error(f"Error sending request: {e}")
         await update.message.reply_text("❌ An error occurred while processing your request.")
@@ -70,4 +56,4 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    main()  # Direct call instead of asyncio.run(main())
