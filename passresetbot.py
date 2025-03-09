@@ -14,14 +14,19 @@ logger = logging.getLogger(__name__)
 # 🔹 Replace this with your Telegram bot token from BotFather
 TELEGRAM_BOT_TOKEN = "7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA"
 
-# 🔹 Function for /start command
+# Function for /start command
 async def start(update: Update, context: CallbackContext):
     welcome_msg = (
-        "🤖 Welcome to the Insta Reset Bot!\n\n"
-        "🔹 Send me your Instagram username/email, and I'll request a password reset for you.\n"
-        "           ~By @spokycap | @Cyberjurks\n\n "
+        "💀 *Welcome to Insta Reset Bot!* 💀\n\n"
+        "🚀 *Need a password reset?* I got you! Just send me your Instagram username or email, and I'll request a reset for you.\n\n"
+        "🔹 *Fast, Secure & Hassle-Free!*\n"
+        "🔹 *Stay in control of your account.*\n\n"
+        "📌 *Created by:* @spokycap | @Cyberjurks"
     )
-    await update.message.reply_text(welcome_msg)
+    await update.message.reply_text(welcome_msg, parse_mode="MarkdownV2")
+
+
+import json
 
 # 🔹 Function to handle incoming messages
 async def send_reset_request(update: Update, context: CallbackContext):
@@ -36,16 +41,24 @@ async def send_reset_request(update: Update, context: CallbackContext):
     
     data = {"user_email": user_input}
 
-    try:  # <-- Make sure this is followed by an indented block
+    try:
         response = requests.post(url, headers=headers, data=data)
+        
+        # Load JSON response for pretty formatting
+        response_json = json.loads(response.text)
+        formatted_json = json.dumps(response_json, indent=2)  # Pretty print JSON
+        
+        # Escape special characters for MarkdownV2
+        formatted_json = formatted_json.replace(".", "\\.").replace("-", "\\-").replace("_", "\\_")
+        
+        formatted_response = f"📩 Instagram Response:\n```\n{formatted_json}\n```"
+        
+        await update.message.reply_text(formatted_response, parse_mode="MarkdownV2")
 
-        formatted_response = f"📩 Instagram Response:\n```\nJSON\n{response.text}\n```"
-
-        await update.message.reply_text(formatted_response, parse_mode="MarkdownV2")  # Enable Markdown formatting
-    
-    except Exception as e:  # <-- 'except' should also have an indented block
+    except Exception as e:
         logger.error(f"Error sending request: {e}")
         await update.message.reply_text("❌ An error occurred while processing your request.")
+
 
 
 # 🔹 Start the Telegram bot
