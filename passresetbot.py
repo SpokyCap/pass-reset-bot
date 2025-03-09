@@ -22,29 +22,44 @@ async def start(update: Update, context: CallbackContext):
 # 🔹 Function to handle password reset request
 async def send_reset_request(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()  # Get user input (username/email)
-    
+
     url = "https://i.instagram.com/api/v1/accounts/send_password_reset/"
     headers = {
-        "User-Agent": "Mozilla/5.0",
-        "x-csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV"
+        "User-Agent": "Instagram 155.0.0.37.107 Android",  # More realistic user-agent
+        "Accept": "*/*",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-IG-App-ID": "936619743392459",
+        "X-Requested-With": "XMLHttpRequest"
     }
     
-    data = {"user_email": user_input}
+    data = {"username_or_email": user_input}  # Fixed parameter name
 
     try:
-        response_json = response.json()  # Convert response to JSON
+        response = requests.post(url, headers=headers, data=data)
+        
+        # Log response for debugging
+        logger.info(f"Instagram API Response: {response.text}")
 
-        if response_json.get("status") == "ok":
-            obfuscated_email = response_json.get("obfuscated_email", "Unknown")
-            msg = f"📩 Password reset link sent to: `{obfuscated_email}`"
+        # Check for successful request
+        if response.status_code == 200:
+            response_json = response.json()
+            if response_json.get("status") == "ok":
+                obfuscated_email = response_json.get("obfuscated_email", "Unknown")
+                msg = f"📩 Password reset link sent to: `{obfuscated_email}`"
+            else:
+                msg = "❌ Instagram did not accept the request. Try again later."
         else:
-            msg = "❌ Failed to send password reset request. Try again later."
+            msg = f"❌ Instagram API error (Status {response.status_code}): {response.text}"
 
         await update.message.reply_text(msg, parse_mode="Markdown")
 
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed: {e}")
+        await update.message.reply_text(f"❌ Request error: {e}")
+
     except Exception as e:
-        logger.error(f"Error sending request: {e}")
-        await update.message.reply_text("❌ An error occurred while processing your request.")
+        logger.error(f"Unexpected error: {e}")
+        await update.message.reply_text("❌ An unexpected error occurred.")
 
 # 🔹 Start the Telegram bot
 def main():
