@@ -38,10 +38,21 @@ async def send_reset_request(update: Update, context: CallbackContext):
 
     try:
         response = requests.post(url, headers=headers, data=data)
-        await update.message.reply_text(f"📩 Instagram Response:\n{response.text}")
+
+        # Try to parse response as JSON
+        try:
+            response_json = response.json()
+            formatted_json = json.dumps(response_json, indent=2)
+            formatted_response = f"📩 Instagram Response:\n```\n{formatted_json}\n```"
+        except json.JSONDecodeError:
+            formatted_response = f"📩 Instagram Response:\n{response.text}"
+
+        await update.message.reply_text(formatted_response, parse_mode="MarkdownV2")
+
     except Exception as e:
         logger.error(f"Error sending request: {e}")
         await update.message.reply_text("❌ An error occurred while processing your request.")
+
 
 # 🔹 Start the Telegram bot
 def main():
