@@ -6,28 +6,28 @@ import sys
 try:
     import requests
     from telegram import Update
-    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+    from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 except ImportError:
     print("Installing required modules...")
     subprocess.run([sys.executable, "-m", "pip", "install", "requests", "python-telegram-bot"], check=True)
     import requests
     from telegram import Update
-    from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+    from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # 🔹 Replace this with your Telegram bot token from BotFather
 TELEGRAM_BOT_TOKEN = "7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA"
 
 # 🔹 Function for /start command
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: CallbackContext):
     welcome_msg = (
         "🤖 Welcome to the Insta Reset Bot!\n\n"
         "🔹 Send me your Instagram username/email, and I'll request a password reset for you.\n"
         "           ~By @spokycap | @Cyberjurks\n\n "
     )
-    update.message.reply_text(welcome_msg, parse_mode="Markdown")
+    await update.message.reply_text(welcome_msg)
 
 # 🔹 Function to handle incoming messages
-def send_reset_request(update: Update, context: CallbackContext):
+async def send_reset_request(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()  # Get user input (username/email)
 
     # Instagram password reset API
@@ -48,20 +48,19 @@ def send_reset_request(update: Update, context: CallbackContext):
     response = requests.post(url, headers=headers, data=data)
 
     # Send the response back to Telegram
-    update.message.reply_text(f"📩 Instagram Response:\n{response.text}", parse_mode="Markdown")
+    await update.message.reply_text(f"📩 Instagram Response:\n{response.text}")
 
 # 🔹 Start the Telegram bot
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Command handlers
-    dp.add_handler(CommandHandler("start", start))  # Handle /start command
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, send_reset_request))  # Handle messages
+    app.add_handler(CommandHandler("start", start))  # Handle /start command
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))  # Handle messages
 
     # Start the bot
-    updater.start_polling()
-    updater.idle()
+    print("Bot is running...")
+    app.run_polling()
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
