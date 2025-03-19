@@ -28,11 +28,11 @@ DEVICES = [
         },
         "cookies": {
             "csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
-            "sessionid": "",  # Leave empty or fake; real ones need login
-            "mid": "random_mid_123",  # Fake device identifier
-            "ig_did": "fake_device_id_win_001"  # Fake device ID
+            "sessionid": "",
+            "mid": "random_mid_123",
+            "ig_did": "fake_device_id_win_001"
         },
-        "last_used": 0,  # Timestamp of last use
+        "last_used": 0,
         "name": "Windows Chrome"
     },
     {
@@ -138,19 +138,20 @@ async def send_reset_request(update: Update, context: CallbackContext):
         return
     await request_queue.put((user_input, update, context))
 
-# Main function
-async def main():
+# Main function (synchronous wrapper)
+def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     
     # Handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))
     
-    # Start the request processor
-    asyncio.create_task(process_requests())
+    # Start the request processor task
+    loop = asyncio.get_event_loop()
+    loop.create_task(process_requests())
     
     logger.info("Bot is running...")
-    await app.run_polling()
+    app.run_polling()  # This runs the event loop
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()  # Call synchronously, let run_polling handle the loop
