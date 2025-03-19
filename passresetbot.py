@@ -5,7 +5,7 @@ import requests
 import random
 import time
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, ApplicationHandler
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -138,6 +138,10 @@ async def send_reset_request(update: Update, context: CallbackContext):
         return
     await request_queue.put((user_input, update, context))
 
+# Custom handler to start the task after initialization
+async def start_tasks(update: Update, context: CallbackContext):
+    context.application.create_task(process_requests(context.application))
+
 # Main function
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -145,9 +149,8 @@ def main():
     # Handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))
-    
-    # Start the request processor task after the application is running
-    app.post_init = lambda app: app.create_task(process_requests(app))
+    # Add a one-time handler to start the task when the bot receives any update
+    app.add_handler(ApplicationHandler(start_tasks), group=-1)  # Low group to run early
     
     logger.info("Bot is running...")
     app.run_polling()  # This runs the event loop
