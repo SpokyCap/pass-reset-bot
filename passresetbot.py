@@ -76,7 +76,7 @@ DEVICES = [
 ]
 
 # Request queue and cooldown
-REQUEST_COOLDOWN = 5  # 5 seconds minimum between requests per device
+REQUEST_COOLDOWN = 30  # 30 seconds minimum between requests per device
 request_queue = asyncio.Queue()
 
 # /start command
@@ -89,7 +89,7 @@ async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(welcome_msg)
 
 # Process requests with device activation
-async def process_requests():
+async def process_requests(app: Application):
     while True:
         user_input, update, context = await request_queue.get()
         url = "https://i.instagram.com/api/v1/accounts/send_password_reset/"
@@ -97,9 +97,9 @@ async def process_requests():
         # Select the least recently used device
         available_devices = [d for d in DEVICES if time.time() - d["last_used"] >= REQUEST_COOLDOWN]
         if not available_devices:
-            await update.message.reply_text("⏳ All devices are on cooldown. Try again in a few seconds.")
+            await update.message.reply_text("⏳ All devices are on cooldown. Try again in 30-60 seconds.")
             await request_queue.put((user_input, update, context))  # Re-queue
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
             continue
         
         device = random.choice(available_devices)
@@ -117,7 +117,7 @@ async def process_requests():
                 timeout=10
             )
             if response.status_code == 429:
-                await update.message.reply_text("⏳ Too many requests. Please wait and try again later.")
+                await update.message.reply_text("⏳ Instagram rate limit hit. Please wait 5-10 minutes.")
             elif response.status_code == 200:
                 await update.message.reply_text("📩 Success! Check your email for the reset link.")
             else:
@@ -126,19 +126,19 @@ async def process_requests():
             logger.error(f"Error with {device['name']}: {e}")
             await update.message.reply_text("❌ An error occurred while processing your request.")
         
-        # Random delay to simulate "power saving"
-        await asyncio.sleep(REQUEST_COOLDOWN + random.uniform(0, 3))  # 5-8 seconds
+        # Random delay between 30-60 seconds
+        await asyncio.sleep(REQUEST_COOLDOWN + random.uniform(0, 30))
         request_queue.task_done()
 
 # Handle incoming messages
 async def send_reset_request(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
-    if request_queue.qsize() > 10:  # Limit queue size
+    if request_queue.qsize() > 5:  # Reduced queue size to limit load
         await update.message.reply_text("⏳ Bot is busy. Please try again in a minute.")
         return
     await request_queue.put((user_input, update, context))
 
-# Main function (synchronous wrapper)
+# Main function
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     
@@ -146,12 +146,11 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))
     
-    # Start the request processor task
-    loop = asyncio.get_event_loop()
-    loop.create_task(process_requests())
+    # Start the request processor task after the application is running
+    app.post_init = lambda app: app.create_task(process_requests(app))
     
     logger.info("Bot is running...")
     app.run_polling()  # This runs the event loop
 
 if __name__ == "__main__":
-    main()  # Call synchronously, let run_polling handle the loop
+    main()
