@@ -6,7 +6,7 @@ import random
 import time
 import json
 import uuid
-from telegram import Update, error  # Import telegram.error explicitly
+from telegram import Update, error
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Enable logging for debugging
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Telegram bot token
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA")
 
-# Simulated "devices" with unique headers, cookies, and App-IDs (unchanged from previous)
+# Simulated "devices" with unique headers, cookies, and App-IDs
 DEVICES = [
     {
         "headers": {
@@ -141,7 +141,6 @@ async def send_reset_request(update: Update, context: CallbackContext):
         if response.status_code == 429:
             await update.message.reply_text("⏳ Instagram rate limit hit. Please wait 5-10 minutes.")
         elif response.status_code == 200:
-            # Parse the JSON response for obfuscated email
             try:
                 response_data = response.json()
                 obfuscated_email = response_data.get("obfuscated_email", "your email")
@@ -149,17 +148,14 @@ async def send_reset_request(update: Update, context: CallbackContext):
             except json.JSONDecodeError:
                 await update.message.reply_text("📩 Success! Check your email for the reset link.")
         else:
-            # Handle Instagram errors, truncate if too long
             try:
                 error_data = response.json()
                 error_message = error_data.get("message", response.text)
-                # Truncate to Telegram's 4096 char limit, leaving room for prefix
                 max_length = 4096 - len("❌ Instagram Error: ")
                 if len(error_message) > max_length:
                     error_message = error_message[:max_length] + "..."
                 await update.message.reply_text(f"❌ Instagram Error: {error_message}")
             except json.JSONDecodeError:
-                # Truncate raw text if JSON parsing fails
                 error_message = response.text
                 max_length = 4096 - len("❌ Instagram Error: ")
                 if len(error_message) > max_length:
@@ -172,10 +168,10 @@ async def send_reset_request(update: Update, context: CallbackContext):
 # Error handler for Telegram conflicts
 async def error_handler(update: Update, context: CallbackContext):
     logger.error(f"Exception occurred: {context.error}")
-    if isinstance(context.error, error.Conflict):  # Use error.Conflict
+    if isinstance(context.error, error.Conflict):
         await update.message.reply_text("⚠️ Bot conflict detected. Restarting in a moment...")
-        time.sleep(5)  # Wait before restarting
-        raise context.error  # Let the application restart
+        time.sleep(5)
+        raise context.error
     elif isinstance(context.error, error.BadRequest) and "Message is too long" in str(context.error):
         await update.message.reply_text("❌ Error: Response too long to send. Check logs for details.")
     else:
@@ -185,19 +181,31 @@ async def error_handler(update: Update, context: CallbackContext):
 async def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Explicitly disable webhook (await it since it’s async)
+    # Disable webhook
     await app.bot.delete_webhook(drop_pending_updates=True)
     logger.info("Webhook disabled, starting polling...")
 
     # Command handlers
-    app.add_handler(CommandHandler("start", start))  # Handle /start command
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))  # Handle messages
-    app.add_error_handler(error_handler)  # Add error handler
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))
+    app.add_error_handler(error_handler)
 
     # Start the bot
     logger.info("Bot is running...")
     await app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == "__main__":
-    # Run the async main function
-    asyncio.run(main())
+    # Use the existing event loop instead of asyncio.run()
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        # If the loop is already running (e.g., in Railway), create a task
+        task = loop.create_task(main())
+        try:
+            loop.run_until_complete(task)
+        except KeyboardInterrupt:
+            task.cancel()
+            loop.run_until_complete(asyncio.gather(task, return_exceptions=True))
+            loop.close()
+    else:
+        # If no loop is running, run it normally
+        loop.run_until_complete(main())
