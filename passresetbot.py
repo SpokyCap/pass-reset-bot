@@ -5,7 +5,8 @@ import requests
 import random
 import time
 import json
-from telegram import Update
+import uuid
+from telegram import Update, error  # Import telegram.error explicitly
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Enable logging for debugging
@@ -15,61 +16,85 @@ logger = logging.getLogger(__name__)
 # Telegram bot token
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7544051823:AAGWFsIQqypz9-yPyCAC5v4cAzouqjsMqyA")
 
-# Simulated "devices" with headers and cookies
+# Simulated "devices" with unique headers, cookies, and App-IDs (unchanged from previous)
 DEVICES = [
     {
         "headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "x-csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "*/*",
+            "x-csrftoken": "X7kP9mLqzialQA7z96AMiyAKLMBWpqVj",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Accept": "application/json, text/plain, */*",
             "Origin": "https://www.instagram.com",
             "Referer": "https://www.instagram.com/accounts/password/reset/",
             "X-Requested-With": "XMLHttpRequest",
+            "X-IG-App-ID": "1217981644879628",
+            "X-IG-Connection-Type": "WIFI",
+            "X-IG-Capabilities": "3brTvw==",
+            "X-Pigeon-Session-Id": str(uuid.uuid4()),
+            "X-IG-Bandwidth-Speed-KBPS": "1500.000",
+            "X-IG-Bandwidth-TotalBytes-B": "300000",
         },
         "cookies": {
-            "csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
+            "csrftoken": "X7kP9mLqzialQA7z96AMiyAKLMBWpqVj",
             "sessionid": "",
-            "mid": "random_mid_123",
-            "ig_did": "fake_device_id_win_001"
+            "mid": "Z1aB2cD3eF4gH5iJ6kL7mN8oP9qR",
+            "ig_did": "123E4567-E89B-12D3-A456-426614174000",
+            "rur": "ASH",
+            "ig_nrcb": "1",
         },
         "last_used": 0,
         "name": "Windows Chrome"
     },
     {
         "headers": {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-            "x-csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "*/*",
+            "User-Agent": "Instagram 100.0.0.17.129 (iPhone13,3; iOS 15_0; en_US; en-US; scale=3.00; 1170x2532; 161478664)",
+            "x-csrftoken": "P4nM8kJqzialQA7z96AMiyAKLMBWpqVj",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Accept": "application/json, text/plain, */*",
             "Origin": "https://www.instagram.com",
             "Referer": "https://www.instagram.com/accounts/password/reset/",
             "X-Requested-With": "XMLHttpRequest",
+            "X-IG-App-ID": "567067343352427",
+            "X-IG-Connection-Type": "WIFI",
+            "X-IG-Capabilities": "3brTvx8=",
+            "X-Pigeon-Session-Id": str(uuid.uuid4()),
+            "X-IG-Bandwidth-Speed-KBPS": "3200.000",
+            "X-IG-Bandwidth-TotalBytes-B": "600000",
         },
         "cookies": {
-            "csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
+            "csrftoken": "P4nM8kJqzialQA7z96AMiyAKLMBWpqVj",
             "sessionid": "",
-            "mid": "random_mid_456",
-            "ig_did": "fake_device_id_ios_002"
+            "mid": "Q9wX8vU7tS6rP5oN4mL3kJ2iH1gF",
+            "ig_did": "987F6543-21AB-12C3-D456-789123456789",
+            "ds_user_id": "fakeuser987654",
+            "rur": "PRN",
         },
         "last_used": 0,
         "name": "iPhone Safari"
     },
     {
         "headers": {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36",
-            "x-csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "*/*",
+            "User-Agent": "Instagram 194.0.0.36.172 Android (30/11; 440dpi; 1080x2340; samsung; SM-G991B; exynos2100; en_US; 293092486)",
+            "x-csrftoken": "K2xL7mNqzialQA7z96AMiyAKLMBWpqVj",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Accept": "application/json, text/plain, */*",
             "Origin": "https://www.instagram.com",
             "Referer": "https://www.instagram.com/accounts/password/reset/",
             "X-Requested-With": "XMLHttpRequest",
+            "X-IG-App-ID": "124024574287414",
+            "X-IG-Connection-Type": "MOBILE(LTE)",
+            "X-IG-Capabilities": "3brTvwM=",
+            "X-Pigeon-Session-Id": str(uuid.uuid4()),
+            "X-IG-Bandwidth-Speed-KBPS": "1800.000",
+            "X-IG-Bandwidth-TotalBytes-B": "450000",
         },
         "cookies": {
-            "csrftoken": "vEG96oJnlEsyUWNS53bHLkVTMFYQKCBV",
+            "csrftoken": "K2xL7mNqzialQA7z96AMiyAKLMBWpqVj",
             "sessionid": "",
-            "mid": "random_mid_789",
-            "ig_did": "fake_device_id_android_003"
+            "mid": "R5tY4uI3oP2nM1lK0jH9gF8eD7cB",
+            "ig_did": "ABC12345-6789-0DEF-1234-56789ABCDEF0",
+            "ig_nrcb": "1",
+            "ds_user_id": "fakeandroid54321",
         },
         "last_used": 0,
         "name": "Android Chrome"
@@ -124,7 +149,22 @@ async def send_reset_request(update: Update, context: CallbackContext):
             except json.JSONDecodeError:
                 await update.message.reply_text("📩 Success! Check your email for the reset link.")
         else:
-            await update.message.reply_text(f"📩 Instagram Response:\n{response.text}")
+            # Handle Instagram errors, truncate if too long
+            try:
+                error_data = response.json()
+                error_message = error_data.get("message", response.text)
+                # Truncate to Telegram's 4096 char limit, leaving room for prefix
+                max_length = 4096 - len("❌ Instagram Error: ")
+                if len(error_message) > max_length:
+                    error_message = error_message[:max_length] + "..."
+                await update.message.reply_text(f"❌ Instagram Error: {error_message}")
+            except json.JSONDecodeError:
+                # Truncate raw text if JSON parsing fails
+                error_message = response.text
+                max_length = 4096 - len("❌ Instagram Error: ")
+                if len(error_message) > max_length:
+                    error_message = error_message[:max_length] + "..."
+                await update.message.reply_text(f"❌ Instagram Error: {error_message}")
     except requests.exceptions.RequestException as e:
         logger.error(f"Error with {device['name']}: {e}")
         await update.message.reply_text("❌ An error occurred while processing your request.")
@@ -132,17 +172,21 @@ async def send_reset_request(update: Update, context: CallbackContext):
 # Error handler for Telegram conflicts
 async def error_handler(update: Update, context: CallbackContext):
     logger.error(f"Exception occurred: {context.error}")
-    if isinstance(context.error, telegram.error.Conflict):
+    if isinstance(context.error, error.Conflict):  # Use error.Conflict
         await update.message.reply_text("⚠️ Bot conflict detected. Restarting in a moment...")
         time.sleep(5)  # Wait before restarting
         raise context.error  # Let the application restart
+    elif isinstance(context.error, error.BadRequest) and "Message is too long" in str(context.error):
+        await update.message.reply_text("❌ Error: Response too long to send. Check logs for details.")
+    else:
+        await update.message.reply_text("❌ An unexpected error occurred.")
 
 # Start the Telegram bot
-def main():
+async def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Explicitly disable webhook to ensure polling works
-    app.bot.delete_webhook(drop_pending_updates=True)
+    # Explicitly disable webhook (await it since it’s async)
+    await app.bot.delete_webhook(drop_pending_updates=True)
     logger.info("Webhook disabled, starting polling...")
 
     # Command handlers
@@ -152,7 +196,8 @@ def main():
 
     # Start the bot
     logger.info("Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    await app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == "__main__":
-    main()
+    # Run the async main function
+    asyncio.run(main())
