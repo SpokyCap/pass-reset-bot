@@ -195,17 +195,15 @@ async def main():
     await app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == "__main__":
-    # Use the existing event loop instead of asyncio.run()
-    loop = asyncio.get_event_loop()
-    if loop.is_running():
-        # If the loop is already running (e.g., in Railway), create a task
-        task = loop.create_task(main())
-        try:
-            loop.run_until_complete(task)
-        except KeyboardInterrupt:
-            task.cancel()
-            loop.run_until_complete(asyncio.gather(task, return_exceptions=True))
-            loop.close()
-    else:
-        # If no loop is running, run it normally
-        loop.run_until_complete(main())
+    # For Railway, assume an existing event loop and run the bot directly
+    # Use asyncio.run() only for local testing
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "This event loop is already running" in str(e):
+            # If running in an environment like Railway with an active loop
+            loop = asyncio.get_event_loop()
+            loop.create_task(main())
+            loop.run_forever()  # Keep the loop running indefinitely
+        else:
+            raise
