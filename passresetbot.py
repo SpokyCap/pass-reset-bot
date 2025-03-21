@@ -129,17 +129,30 @@ async def send_reset_request(update: Update, context: CallbackContext):
         logger.error(f"Error with {device['name']}: {e}")
         await update.message.reply_text("❌ An error occurred while processing your request.")
 
+# Error handler for Telegram conflicts
+async def error_handler(update: Update, context: CallbackContext):
+    logger.error(f"Exception occurred: {context.error}")
+    if isinstance(context.error, telegram.error.Conflict):
+        await update.message.reply_text("⚠️ Bot conflict detected. Restarting in a moment...")
+        time.sleep(5)  # Wait before restarting
+        raise context.error  # Let the application restart
+
 # Start the Telegram bot
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
+    # Explicitly disable webhook to ensure polling works
+    app.bot.delete_webhook(drop_pending_updates=True)
+    logger.info("Webhook disabled, starting polling...")
+
     # Command handlers
     app.add_handler(CommandHandler("start", start))  # Handle /start command
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_reset_request))  # Handle messages
+    app.add_error_handler(error_handler)  # Add error handler
 
     # Start the bot
     logger.info("Bot is running...")
-    app.run_polling()
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == "__main__":
-    main()  # Direct call instead of asyncio.run(main())
+    main()
